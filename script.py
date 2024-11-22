@@ -142,7 +142,7 @@ for i_episode in itertools.count(1):
             final_action = env.action_space.sample()
         else:
 
-            final_action, _ = agent.select_action(state)
+            final_action, _ = agent.select_action(state,task="shapematch")
             
             # log action image (only log x direction)
             if args.wandb and total_numsteps % 200 == 0:
