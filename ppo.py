@@ -42,4 +42,32 @@ class PPO(Agent):
         return action, None
     
     def update_parameters(self, memory, updates):
-        return super().update_parameters(memory, updates)
+        states, actions, rewards, next_states, log_probs, dones = memory.sample()
+        
+        # Compute advantages and returns
+        values = self.policy.evaluate(states)
+        next_values = self.policy.evaluate(next_states)
+        advantages = rewards + (1 - dones) * self.gamma * next_values - values.detach()
+        
+        returns = advantages + values  # Target for value function
+        
+        for _ in range(updates):
+            new_log_probs, entropy = self.policy.evaluate_actions(states, actions)
+            
+            # Compute ratios
+            ratios = torch.exp(new_log_probs - log_probs.detach())
+            
+            # Surrogate objective
+            surr1 = ratios * advantages
+            surr2 = torch.clamp(ratios, 1.0 - self.clip_epsilon, 1.0 + self.clip_epsilon) * advantages
+            policy_loss = -torch.min(surr1, surr2).mean()
+            
+            # Value loss
+            value_loss = self.value_loss_fn(values, returns)
+            
+            # Total loss
+            loss = policy_loss + self.value_coef * value_loss - self.entropy_coef * entropy.mean()
+            
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()

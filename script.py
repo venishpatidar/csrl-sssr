@@ -12,32 +12,29 @@ import numpy as np
 import taichi as ti
 import torch
 from torch.nn import Upsample
-
-torch.set_num_threads(16)
-torch.cuda.empty_cache()
-
 from replay_memory import ReplayMemory
 import dittogym
 from model import GaussianPolicy, QNetwork
 
 # Agents
 from sac import SAC
-import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
+from ddpg import DDPG
+from ppo import PPO
 
 # Parsing Arguments
 parser = argparse.ArgumentParser(description='DittoGym Project')
-parser.add_argument('--env_name', default="shapematch-coarse-v0",
+parser.add_argument('--agent', default="sac", type=str, required=True, metavar='sac',
+                    help='reinforcement learning agent (sac, ppo, ddpg)')
+parser.add_argument('--env_name', default="shapematch-coarse-v0", metavar='shapematch-coarse-v0',
                     help='name of the environment to run')
-parser.add_argument('--config_file_path', type=str, default=None, metavar='G',
+parser.add_argument('--config_file_path', type=str, default=None, metavar='././', required=True,
                     help='path of the config file')
-parser.add_argument('--wandb', type=bool, default=False, 
-                    help='if use wandb (default: False)')
-parser.add_argument('--gui', type=bool, default=False, metavar='G',
-                    help='if use gui (default: False)')
-parser.add_argument('--visualize_interval', type=int, default=10,
-                    help='visualization interval (default: 10)')
+parser.add_argument('--wandb', type=bool, default=False, metavar="False",
+                    help='if use wandb')
+parser.add_argument('--gui', type=bool, default=False, metavar='False',
+                    help='if use gui')
+parser.add_argument('--visualize_interval', type=int, default=10, metavar='10',
+                    help='visualization interval')
 
 args = parser.parse_args()
 
@@ -88,6 +85,9 @@ if args.save_model and not os.path.exists(file_path + "/models"):
 json.dump(args.__dict__, open(file_path + "/config.json", 'w'), indent=4)
 
 
+torch.set_num_threads(16)
+torch.cuda.empty_cache()
+
 # Taichi
 ti.init(arch=ti.gpu, random_seed=args.seed)
 
@@ -106,7 +106,14 @@ utils.set_random_seed(args.seed, args.cuda_deterministic)
 env.action_space.seed(args.seed)
 
 # Agent
-agent = SAC(env.observation_space.shape[0], env.action_space, args)
+if args.agent=="sac":
+    agent = SAC(env.observation_space.shape[0], env.action_space, args)
+elif args.agent=="ddpg":
+    agent = DDPG(env.observation_space.shape[0], env.action_space, args)
+elif args.agent=="ppo":
+    agent = PPO(env.observation_space.shape[0], env.action_space, args)
+else:
+    raise NameError("wrong agent name available agents are: sac, ppo, ddpg")
 
 # Memory
 memory = ReplayMemory(args.replay_size, args.seed, args.batch_size)

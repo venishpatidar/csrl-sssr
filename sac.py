@@ -10,21 +10,12 @@ from agent import Agent
 
 class SAC(Agent):
     def __init__(self, num_inputs, action_space, args):
-        self.args = args
-        self.num_inputs = num_inputs
-        self.gamma = args.gamma
-        self.tau = args.tau
-        self.alpha = args.alpha
+        super().__init__(num_inputs, action_space, args)
+
         self.action_res = args.action_res
         self.target_update_interval = args.target_update_interval
         self.automatic_entropy_tuning = args.automatic_entropy_tuning
-        self.device = torch.device("cuda" if args.cuda else "cpu")
         self.exp_upsample_list = [Upsample(scale_factor=i, mode='bicubic', align_corners=True) for i in [1, 2, 4, 8]]
-
-        # for reward normalization
-        self.momentum = args.momentum
-        self.mean = 0.0
-        self.var = 1.0
 
         # critic
         self.upsampled_action_res = args.action_res * args.action_res_resize
@@ -76,16 +67,6 @@ class SAC(Agent):
             action = action.detach().cpu().numpy()[0]
             return action, None, None
 
-    def reward_normalization(self, rewards):
-        # update mean and var for reward normalization
-        batch_mean = torch.mean(rewards)
-        batch_var = torch.var(rewards)
-        self.mean = self.momentum * self.mean + (1 - self.momentum) * batch_mean
-        self.var = self.momentum * self.var + (1 - self.momentum) * batch_var
-        std = torch.sqrt(self.var)
-        normalized_rewards = (rewards - self.mean) / (std + 1e-8)
-        return normalized_rewards
-
     def update_parameters(self, memory, updates):
         # sample a batch from memory
         (
@@ -103,7 +84,7 @@ class SAC(Agent):
         # normalize rewards
         reward_batch = self.reward_normalization(reward_batch)
 
-        # # SAC
+        # # SAC: Soft Actor Critic
         # critic
         with torch.no_grad():
             if self.args.residual:
