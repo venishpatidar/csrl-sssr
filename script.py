@@ -19,12 +19,12 @@ from model import GaussianPolicy, QNetwork
 # Agents
 from sac import SAC
 from ddpg import DDPG
-from ppo import PPO
+from td3 import TD3
 
 # Parsing Arguments
 parser = argparse.ArgumentParser(description='DittoGym Project')
 parser.add_argument('--agent', default="sac", type=str, required=True, metavar='sac',
-                    help='reinforcement learning agent (sac, ppo, ddpg)')
+                    help='reinforcement learning agent (sac, td3, ddpg)')
 parser.add_argument('--env_name', default="shapematch-coarse-v0", metavar='shapematch-coarse-v0',
                     help='name of the environment to run')
 parser.add_argument('--config_file_path', type=str, default=None, metavar='././', required=True,
@@ -110,10 +110,10 @@ if args.agent=="sac":
     agent = SAC(env.observation_space.shape[0], env.action_space, args)
 elif args.agent=="ddpg":
     agent = DDPG(env.observation_space.shape[0], env.action_space, args)
-elif args.agent=="ppo":
-    agent = PPO(env.observation_space.shape[0], env.action_space, args)
+elif args.agent=="td3":
+    agent = TD3(env.observation_space.shape[0], env.action_space, args)
 else:
-    raise NameError("wrong agent name available agents are: sac, ppo, ddpg")
+    raise NameError("wrong agent name available agents are: sac, td3, ddpg")
 
 # Memory
 memory = ReplayMemory(args.replay_size, args.seed, args.batch_size)
