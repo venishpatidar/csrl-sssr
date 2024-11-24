@@ -36,11 +36,13 @@ class DDPG(Agent):
                                      self.action_res,
                                      self.upsampled_action_res,
                                      args.residual, 
+                                     True,
                                      args.coarse2fine_bias).to(device=self.device)
         self.policy_target = GaussianPolicy(num_inputs,
                                      self.action_res,
                                      self.upsampled_action_res,
                                      args.residual, 
+                                     True,
                                      args.coarse2fine_bias).to(device=self.device)
 
         self.policy_optim = Adam(self.policy.parameters(), lr=args.lr)
@@ -112,5 +114,5 @@ class DDPG(Agent):
             soft_update(self.q_network_target, self.q_network, self.tau)
             soft_update(self.policy_target, self.policy, self.tau)
 
-        return Q_function_loss.item(), _, policy_loss.item(),_, self.alpha,\
+        return Q_function_loss.item(), Q_function_loss.item(), policy_loss.item(),_, self.alpha,\
             _, _

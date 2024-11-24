@@ -36,11 +36,13 @@ class TD3(Agent):
                                      self.action_res,
                                      self.upsampled_action_res,
                                      args.residual, 
+                                     True,
                                      args.coarse2fine_bias).to(device=self.device)
         self.policy_target = GaussianPolicy(num_inputs,
                                      self.action_res,
                                      self.upsampled_action_res,
                                      args.residual, 
+                                     True,
                                      args.coarse2fine_bias).to(device=self.device)
 
         self.policy_optim = Adam(self.policy.parameters(), lr=args.lr)
@@ -98,7 +100,7 @@ class TD3(Agent):
 
 
         policy_loss=0.0
-        if updates % 2 == 0:
+        if updates % self.args.td3_policy_update_interval == 0:
             # Policy update
             pi, _, _, _, _ = self.policy.sample(state_batch)
             q1, _ = self.q_network(state_batch, pi)

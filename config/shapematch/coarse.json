@@ -47,6 +47,7 @@
     "start_steps": 500,
     "target": "STAR",
     "target_update_interval": 1,
+    "td3_policy_update_interval": 3,
     "tau": 0.005,
     "updates_per_step": 1,
     "yield_stress": 62,

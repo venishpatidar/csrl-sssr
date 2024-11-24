@@ -98,8 +98,9 @@ class QNetwork(nn.Module):
 
 # Actor Network
 class GaussianPolicy(nn.Module):
-    def __init__(self, num_inputs, action_res, max_action_res, residual=False, bias=0):
+    def __init__(self, num_inputs, action_res, max_action_res, residual=False, ddpg_td3=False, bias=0):
         super(GaussianPolicy, self).__init__()
+        self.ddpg_td3 = ddpg_td3
         if max_action_res == 64:
             self.merge = True
         else:
@@ -246,6 +247,9 @@ class GaussianPolicy(nn.Module):
                 mask = 0.25 * mask
             return mean, std, mask
         else:
+            if self.ddpg_td3:
+                max_action = 6
+                mean = torch.tanh(max_action*mean)
             return mean, std, None
 
     def sample(self, state, coarse_action=None):
