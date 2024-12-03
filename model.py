@@ -249,7 +249,7 @@ class GaussianPolicy(nn.Module):
         else:
             if self.ddpg_td3:
                 max_action = 6
-                mean = torch.tanh(max_action*mean)
+                mean = max_action*torch.tanh(mean)
             return mean, std, None
 
     def sample(self, state, coarse_action=None):
